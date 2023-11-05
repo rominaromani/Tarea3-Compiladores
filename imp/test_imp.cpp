@@ -1,6 +1,5 @@
 #include <sstream>
 #include <iostream>
-#include <iostream>
 
 #include "imp.hh"
 #include "imp_parser.hh"

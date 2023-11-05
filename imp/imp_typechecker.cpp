@@ -88,9 +88,21 @@ void ImpTypeChecker::visit(WhileStatement* s) {
  return;
 }
 
+void ImpTypeChecker::visit(ForStatement* s) {
+  ImpType t1 = s->e1->accept(this);
+  ImpType t2 = s->e2->accept(this);
+  if (!t1.match(inttype) || !t2.match(inttype)){
+    cout<<"Tipos de id en for deben ser enteros"<<endl;
+    exit(0);
+  }
+  s->body->accept(this);
+ return;
+}
+
 ImpType ImpTypeChecker::visit(BinaryExp* e) {
   ImpType t1 = e->left->accept(this);
   ImpType t2 = e->right->accept(this);
+  /*
   if (!t1.match(inttype) || !t2.match(inttype)) {
     cout << "Tipos en BinExp deben de ser int" << endl;
     exit(0);
@@ -105,11 +117,35 @@ ImpType ImpTypeChecker::visit(BinaryExp* e) {
     result = booltype;
     break;
   }
+  */
+ImpType result;
+ if (t1.match(inttype) && t2.match(inttype)) {
+    switch(e->op) {
+    case PLUS:   case MINUS:
+    case MULT:   case DIV:  case EXP:
+      result = inttype;
+      break;
+    case LT: case LTEQ: case EQ:
+      result = booltype;
+      break;
+  }
+ }
+ else if (t1.match(booltype) && t2.match(booltype)){
+    result = booltype;
+ }else{
+    cout << "Tipos en BinExp deben de ser int o bool" << endl;
+    exit(0);
+ }
   return result;
 }
 
 ImpType ImpTypeChecker::visit(NumberExp* e) {
   return inttype;
+}
+
+//True y False
+ImpType ImpTypeChecker::visit(TrueFalseExp* e) {
+  return booltype;
 }
 
 ImpType ImpTypeChecker::visit(IdExp* e) {

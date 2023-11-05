@@ -79,6 +79,29 @@ int ImpInterpreter::visit(WhileStatement* s) {
  return 0;
 }
 
+int ImpInterpreter::visit(ForStatement* s){
+  int v1 = s->e1->accept(this);
+  int v2 = s->e2->accept(this);
+  if (v1 <= v2) {
+    env.add_level();
+    env.add_var(s->id);
+    for(int i = v1; i <= v2; i++) {
+      env.update(s->id, i);
+      s->body->accept(this);
+    }
+    env.remove_level();
+  }else{
+    env.add_level();
+    env.add_var(s->id);
+    for(int i = v1; i >= v2; i--) {
+      env.update(s->id, i);
+      s->body->accept(this);
+    }
+    env.remove_level();
+  }
+  return 0;
+}
+
 int ImpInterpreter::visit(BinaryExp* e) {
   int v1 = e->left->accept(this);
   int v2 = e->right->accept(this);
@@ -95,11 +118,17 @@ int ImpInterpreter::visit(BinaryExp* e) {
   case LT: result = (v1 < v2) ? 1 : 0; break;
   case LTEQ: result = (v1 <= v2) ? 1: 0; break;
   case EQ: result = (v1 == v2) ? 1 : 0; break;
+  case OR: result = (v1 || v2) ? 1 : 0; break;
+  case AND: result = (v1 && v2) ? 1 : 0; break;
   }
   return result;
 }
 
 int ImpInterpreter::visit(NumberExp* e) {
+  return e->value;
+}
+
+int ImpInterpreter::visit(TrueFalseExp* e) {
   return e->value;
 }
 

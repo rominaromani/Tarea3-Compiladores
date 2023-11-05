@@ -3,10 +3,10 @@
 #include "imp_parser.hh"
 
 
-const char* Token::token_names[27] = {
+const char* Token::token_names[34] = {
   "LPAREN" , "RPAREN", "PLUS", "MINUS", "MULT","DIV","EXP","LT","LTEQ","EQ",
   "NUM", "ID", "PRINT", "SEMICOLON", "COMMA", "ASSIGN", "CONDEXP", "IF", "THEN", "ELSE", "ENDIF", "WHILE", "DO",
-  "ENDWHILE", "ERR", "END", "VAR" };
+  "ENDWHILE", "ERR", "END", "VAR", "TRUE", "FALSE", "AND", "OR", "FOR", "COLON", "ENDFOR" };
 
 Token::Token(Type type):type(type) { lexema = ""; }
 
@@ -38,6 +38,12 @@ Scanner::Scanner(string s):input(s),first(0),current(0) {
   reserved["do"] = Token::DO;
   reserved["endwhile"] = Token::ENDWHILE;
   reserved["var"] = Token::VAR;
+  reserved["true"] = Token::TRUE;
+  reserved["false"] = Token::FALSE;
+  reserved["and"] = Token::AND;
+  reserved["or"] = Token::OR;
+  reserved["for"] = Token::FOR;
+  reserved["endfor"] = Token::ENDFOR;
 }
 
 Token* Scanner::nextToken() {
@@ -63,7 +69,7 @@ Token* Scanner::nextToken() {
       token = new Token(ttype);
     else
       token = new Token(Token::ID, getLexema()); 
-  } else if (strchr("()+-*/;=<,", c)) {
+  } else if (strchr("()+-*/;=<,:,", c)) {
     switch(c) {
     case '(': token = new Token(Token::LPAREN); break;
     case ')': token = new Token(Token::RPAREN); break;
@@ -77,6 +83,7 @@ Token* Scanner::nextToken() {
     case '/': token = new Token(Token::DIV); break;
     case ';': token = new Token(Token::SEMICOLON); break;
     case ',': token = new Token(Token::COMMA); break;
+    case ':': token = new Token(Token::COLON); break;
     case '=': token = new Token(Token::ASSIGN); break;
       c = nextChar();
       if (c == '=') token = new Token(Token::EQ);
@@ -250,6 +257,7 @@ StatementList* Parser::parseStatementList() {
 Stm* Parser::parseStatement() {
   Stm* s = NULL;
   Exp* e;
+  Exp *e1, *e2; 
   Body *tb, *fb;
   if (match(Token::ID)) {
     string lex = previous->lexema;
@@ -290,7 +298,30 @@ Stm* Parser::parseStatement() {
     if (!match(Token::ENDWHILE))
 	parserError("Esperaba 'endwhile'");
     s = new WhileStatement(e,tb);
-  } else {
+  } else if (match(Token::FOR)){
+    //if(!match(Token::ID)){
+    //  parserError("Esperaba 'id'");
+    //}
+    string id = previous->lexema;
+    advance();
+    if (!match(Token::COLON)){
+      parserError("Esperaba ':'");
+    }
+    e1 = parseExp();
+    if (!match(Token::COMMA)){
+      parserError("Esperaba ','");
+    }
+    e2 = parseExp();
+    if(!match(Token::DO)){
+      parserError("Esperaba 'do'");
+    }
+    tb = parseBody();
+    if (!match(Token::ENDFOR)){
+      parserError("Esperaba 'endfor'");
+    }
+    s = new ForStatement(id,e1,e2,tb);
+  }
+  else {
     cout << "No se encontro Statement" << endl;
     exit(0);
   }
@@ -298,7 +329,19 @@ Stm* Parser::parseStatement() {
 }
 
 Exp* Parser::parseExp() {
-  return parseCExp();
+  return parseBExp();
+}
+
+Exp* Parser::parseBExp(){
+  Exp *e, *rhs;
+  e = parseCExp();
+  if(match(Token::AND) || match(Token::OR)) {
+    Token::Type op = previous->type;
+    BinaryOp binop = (op==Token:: AND)?AND:OR;
+    rhs = parseBExp();
+    e = new BinaryExp(e, rhs, binop);
+  }
+  return e;
 }
 
 Exp* Parser::parseCExp() {
@@ -351,6 +394,12 @@ Exp* Parser::parseFExp() {
 Exp* Parser::parseFactor() {
   if (match(Token::NUM)) {
     return new NumberExp(stoi(previous->lexema));
+  }
+  if (match(Token::TRUE)){
+    return new TrueFalseExp(1);
+  }
+  if (match(Token::FALSE)){
+    return new TrueFalseExp(0);
   }
   if (match(Token::ID)) {
     return new IdExp(previous->lexema);

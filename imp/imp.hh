@@ -16,7 +16,7 @@ using namespace std;
 class ImpVisitor;
 class TypeVisitor;
 
-enum BinaryOp { PLUS, MINUS, MULT, DIV, EXP, LT, LTEQ, EQ};
+enum BinaryOp { PLUS, MINUS, MULT, DIV, EXP, LT, LTEQ, EQ, AND,OR};
 
   
 class Exp {
@@ -44,6 +44,16 @@ public:
   int accept(ImpVisitor* v);
   ImpType accept(TypeVisitor* v);
   ~NumberExp();
+};
+
+// Añadiendo True y False
+class TrueFalseExp : public Exp {
+public:
+  bool value;
+  TrueFalseExp(bool v);
+  int accept(ImpVisitor* v);
+  ImpType accept(TypeVisitor* v);
+  ~TrueFalseExp();
 };
 
 class IdExp : public Exp {
@@ -124,6 +134,17 @@ public:
   ~WhileStatement();
 };
 
+class ForStatement : public Stm{
+  public:
+    string id;
+    Exp* e1;
+    Exp* e2;
+    Body* body;
+    ForStatement(string id, Exp* start, Exp* end, Body* body);
+    int accept(ImpVisitor* v);
+    void accept(TypeVisitor* v);
+    ~ForStatement();
+};
 
 class StatementList {
 public:

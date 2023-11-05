@@ -28,9 +28,11 @@ public:
   void visit(PrintStatement*);
   void visit(IfStatement*);
   void visit(WhileStatement*);
+  void visit(ForStatement*); //For
   
   ImpType visit(BinaryExp* e);
   ImpType visit(NumberExp* e);
+  ImpType visit(TrueFalseExp* e); //True False
   ImpType visit(IdExp* e);
   ImpType visit(ParenthExp* e);
   ImpType visit(CondExp* e);
